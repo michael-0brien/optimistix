@@ -16,6 +16,7 @@ from .._misc import default_verbose, max_norm, tree_full_like, two_norm
 from .._root_find import AbstractRootFinder, root_find
 from .._search import AbstractDescent, FunctionInfo
 from .._solution import RESULTS
+from .._termination import CauchyTermination
 from .gauss_newton import AbstractGaussNewton, newton_step
 from .newton_chord import Newton
 from .trust_region import ClassicalTrustRegion
@@ -405,9 +406,7 @@ class LevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         a `jax.custom_vjp`, and so does not support forward-mode autodifferentiation.
     """
 
-    rtol: float
-    atol: float
-    norm: Callable[[PyTree], Scalar]
+    termination: CauchyTermination[Y]
     descent: DampedNewtonDescent[Y]
     search: ClassicalTrustRegion[Y]
     verbose: Callable[..., None]
@@ -420,9 +419,7 @@ class LevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         linear_solver: lx.AbstractLinearSolver = lx.QR(),
         verbose: bool | Callable[..., None] = False,
     ):
-        self.rtol = rtol
-        self.atol = atol
-        self.norm = norm
+        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
         self.descent = DampedNewtonDescent(linear_solver=linear_solver)
         self.search = ClassicalTrustRegion()
         self.verbose = default_verbose(verbose)
@@ -465,11 +462,9 @@ class IndirectLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         a `jax.custom_vjp`, and so does not support forward-mode autodifferentiation.
     """
 
-    rtol: float
-    atol: float
-    norm: Callable[[PyTree], Scalar]
     descent: IndirectDampedNewtonDescent[Y]
     search: ClassicalTrustRegion[Y]
+    termination: CauchyTermination
     verbose: Callable[..., None]
 
     def __init__(
@@ -482,9 +477,7 @@ class IndirectLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         root_finder: AbstractRootFinder = Newton(rtol=0.01, atol=0.01),
         verbose: bool | Callable[..., None] = False,
     ):
-        self.rtol = rtol
-        self.atol = atol
-        self.norm = norm
+        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
         self.descent = IndirectDampedNewtonDescent(
             lambda_0=lambda_0,
             linear_solver=linear_solver,

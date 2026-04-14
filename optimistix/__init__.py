@@ -81,6 +81,10 @@ from ._solver import (
     ScaledLevenbergMarquardt as ScaledLevenbergMarquardt,
     SteepestDescent as SteepestDescent,
 )
+from ._termination import (
+    AbstractTermination as AbstractTermination,
+    CauchyTermination as CauchyTermination,
+)
 
 
 __version__ = importlib.metadata.version("optimistix")
