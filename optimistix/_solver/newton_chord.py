@@ -185,7 +185,7 @@ class _AbstractNewtonChord(AbstractRootFinder[Y, Out, Aux, _NewtonChordState[Y]]
             converged = _converged(factor, self.kappa)
             terminate = at_least_two & (small | diverged | converged)
             terminate_result = RESULTS.where(
-                at_least_two & jnp.invert(small) & (diverged | jnp.invert(converged)),
+                at_least_two & jnp.invert(small) & diverged,
                 RESULTS.nonlinear_divergence,
                 RESULTS.successful,
             )
@@ -254,7 +254,7 @@ _init_doc = """**Arguments:**
 
 - `rtol`: Relative tolerance for terminating the solve.
 - `atol`: Absolute tolerance for terminating the solve.
-- `norm`: The norm used to determine the difference between two iterates in the 
+- `norm`: The norm used to determine the difference between two iterates in the
     convergence criteria. Should be any function `PyTree -> Scalar`. Optimistix
     includes three built-in norms: [`optimistix.max_norm`][],
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].

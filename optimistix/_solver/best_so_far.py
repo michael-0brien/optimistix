@@ -123,7 +123,7 @@ class BestSoFarMinimiser(  # pyright: ignore
 
 BestSoFarMinimiser.__init__.__doc__ = """**Arguments:**
 
-- `solver`: the minimiser to wrap.  
+- `solver`: the minimiser to wrap.
 """
 
 
@@ -149,7 +149,7 @@ class BestSoFarLeastSquares(  # pyright: ignore
 
 BestSoFarLeastSquares.__init__.__doc__ = """**Arguments:**
 
-- `solver`: the least-squares solver to wrap.  
+- `solver`: the least-squares solver to wrap.
 """
 
 
@@ -173,7 +173,7 @@ class BestSoFarRootFinder(  # pyright: ignore
 
 BestSoFarRootFinder.__init__.__doc__ = """**Arguments:**
 
-- `solver`: the root-finder solver to wrap.  
+- `solver`: the root-finder solver to wrap.
 """
 
 
@@ -197,5 +197,5 @@ class BestSoFarFixedPoint(  # pyright: ignore
 
 BestSoFarFixedPoint.__init__.__doc__ = """**Arguments:**
 
-- `solver`: the fixed-point solver to wrap.  
+- `solver`: the fixed-point solver to wrap.
 """
