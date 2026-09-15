@@ -8,6 +8,7 @@ import lineax as lx
 from equinox.internal import ω
 from jaxtyping import Array, PyTree, Scalar
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Out, Y
 from .._misc import (
     default_verbose,
@@ -21,7 +22,6 @@ from .._misc import (
 from .._root_find import AbstractRootFinder, root_find
 from .._search import AbstractDescent, FunctionInfo
 from .._solution import RESULTS
-from .._termination import CauchyTermination
 from .bisection import Bisection
 from .gauss_newton import AbstractGaussNewton, newton_step
 from .trust_region import ClassicalTrustRegion
@@ -238,7 +238,7 @@ class Dogleg(AbstractGaussNewton[Y, Out, Aux]):
 
     descent: DoglegDescent[Y]
     search: ClassicalTrustRegion[Y]
-    termination: CauchyTermination[Y]
+    convergence: CauchyConvergence[Y]
     verbose: Callable[..., None]
 
     def __init__(
@@ -252,7 +252,7 @@ class Dogleg(AbstractGaussNewton[Y, Out, Aux]):
         # We don't expose root_finder to the default API for Dogleg because
         # we assume the `trust_region_norm` norm is `two_norm`, which has
         # an analytic formula for the intersection with the dogleg path.
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.descent = DoglegDescent(linear_solver=linear_solver)
         self.search = ClassicalTrustRegion()
         self.verbose = default_verbose(verbose)

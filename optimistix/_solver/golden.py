@@ -7,11 +7,11 @@ import jax.lax as lax
 import jax.numpy as jnp
 from jaxtyping import Array, Bool, Float, PyTree
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Fn
 from .._minimise import AbstractMinimiser
 from .._misc import tree_where
 from .._solution import RESULTS
-from .._termination import CauchyTermination
 
 
 class _GoldenSearchState(eqx.Module):
@@ -47,11 +47,11 @@ class GoldenSearch(AbstractMinimiser[Float[Array, ""], Aux, _GoldenSearchState])
     between interval segments is always maintained.
     """
 
-    termination: CauchyTermination
+    convergence: CauchyConvergence
 
     def __init__(self, rtol: float, atol: float):
         # All norms are the same for scalars.
-        self.termination = CauchyTermination(rtol, atol, norm=jnp.abs)
+        self.convergence = CauchyConvergence(rtol, atol, norm=jnp.abs)
 
     def init(
         self,
@@ -116,7 +116,7 @@ class GoldenSearch(AbstractMinimiser[Float[Array, ""], Aux, _GoldenSearchState])
         # since that is always the point closest to the current `y_`.
         y_diff = state.middle - y_
         f_diff = state.f_middle - f
-        terminate = self.termination(
+        terminate = self.convergence.check(
             state.middle,
             y_diff,
             state.f_middle,

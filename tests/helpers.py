@@ -17,7 +17,6 @@ import optimistix as optx
 from equinox.internal import ω
 from jaxtyping import Array, PyTree, Scalar
 from optimistix._misc import default_verbose, tree_full_like
-from optimistix._termination import CauchyTermination
 
 
 Y = TypeVar("Y")
@@ -93,7 +92,7 @@ class DoglegMax(optx.AbstractGaussNewton[Y, Out, Aux]):
 
     descent: optx.DoglegDescent[Y]
     search: optx.ClassicalTrustRegion[Y]
-    termination: optx.CauchyTermination
+    convergence: optx.CauchyConvergence
     verbose: Callable[..., None]
 
     def __init__(
@@ -107,14 +106,14 @@ class DoglegMax(optx.AbstractGaussNewton[Y, Out, Aux]):
             trust_region_norm=optx.max_norm,
         )
         self.search = optx.ClassicalTrustRegion()
-        self.termination = optx.CauchyTermination(rtol, atol, optx.max_norm)
+        self.convergence = optx.CauchyConvergence(rtol, atol, optx.max_norm)
         self.verbose = default_verbose(False)
 
 
 class BFGSDampedNewton(optx.AbstractBFGS):
     """BFGS Hessian + direct Levenberg Marquardt update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.DampedNewtonDescent()
@@ -124,7 +123,7 @@ class BFGSDampedNewton(optx.AbstractBFGS):
 class BFGSIndirectDampedNewton(optx.AbstractBFGS):
     """BFGS Hessian + indirect Levenberg Marquardt update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.IndirectDampedNewtonDescent()
@@ -134,7 +133,7 @@ class BFGSIndirectDampedNewton(optx.AbstractBFGS):
 class BFGSDogleg(optx.AbstractBFGS):
     """BFGS Hessian + dogleg update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.DoglegDescent(linear_solver=lx.SVD())
@@ -144,7 +143,7 @@ class BFGSDogleg(optx.AbstractBFGS):
 class BFGSLinearTrustRegion(optx.AbstractBFGS):
     """Standard BFGS + linear trust region update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = True
     search: optx.AbstractSearch = optx.LinearTrustRegion()
     descent: optx.AbstractDescent = optx.NewtonDescent()
@@ -154,7 +153,7 @@ class BFGSLinearTrustRegion(optx.AbstractBFGS):
 class BFGSLinearTrustRegionHessian(optx.AbstractBFGS):
     """Standard BFGS (uses hessian, not inverse!) + linear trust region update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.LinearTrustRegion()
     descent: optx.AbstractDescent = optx.NewtonDescent()
@@ -164,7 +163,7 @@ class BFGSLinearTrustRegionHessian(optx.AbstractBFGS):
 class BFGSClassicalTrustRegionHessian(optx.AbstractBFGS):
     """Standard BFGS (uses hessian, not inverse!) + classical trust region update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.NewtonDescent()
@@ -174,7 +173,7 @@ class BFGSClassicalTrustRegionHessian(optx.AbstractBFGS):
 class DFPDampedNewton(optx.AbstractDFP):
     """DFP Hessian + direct Levenberg Marquardt update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.DampedNewtonDescent()
@@ -184,7 +183,7 @@ class DFPDampedNewton(optx.AbstractDFP):
 class DFPIndirectDampedNewton(optx.AbstractDFP):
     """DFP Hessian + indirect Levenberg Marquardt update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.IndirectDampedNewtonDescent()
@@ -194,7 +193,7 @@ class DFPIndirectDampedNewton(optx.AbstractDFP):
 class DFPDogleg(optx.AbstractDFP):
     """DFP Hessian + dogleg update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.DoglegDescent(linear_solver=lx.SVD())
@@ -204,7 +203,7 @@ class DFPDogleg(optx.AbstractDFP):
 class DFPClassicalTrustRegionHessian(optx.AbstractDFP):
     """Standard DFP (uses hessian, not inverse!) + classical trust region update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.NewtonDescent()
@@ -212,7 +211,7 @@ class DFPClassicalTrustRegionHessian(optx.AbstractDFP):
 
 
 atol = rtol = 1e-8
-termination = optx.CauchyTermination(atol, rtol, optx.max_norm)
+convergence = optx.CauchyConvergence(rtol, atol, optx.max_norm)
 _lsqr_only = (
     optx.LevenbergMarquardt(rtol, atol),
     optx.IndirectLevenbergMarquardt(rtol, atol),
@@ -223,33 +222,33 @@ _lsqr_only = (
 
 
 atol = rtol = 1e-8
-termination = optx.CauchyTermination(atol, rtol, optx.max_norm)
+convergence = optx.CauchyConvergence(rtol, atol, optx.max_norm)
 _general_minimisers = (
     optx.NelderMead(rtol, atol),
     optx.BFGS(rtol, atol, use_inverse=False),
     optx.BFGS(rtol, atol, use_inverse=True),
     optx.LBFGS(rtol, atol, use_inverse=False),
     optx.LBFGS(rtol, atol, use_inverse=True),
-    BFGSDampedNewton(termination),
-    BFGSIndirectDampedNewton(termination),
+    BFGSDampedNewton(convergence),
+    BFGSIndirectDampedNewton(convergence),
     # Tighter tolerance needed to have BFGSDogleg pass the JVP test.
-    BFGSDogleg(termination),
+    BFGSDogleg(convergence),
     optx.OptaxMinimiser(optax.adam(learning_rate=3e-3), rtol=rtol, atol=atol),
     # optax.lbfgs includes their linesearch by default
     optx.OptaxMinimiser(optax.lbfgs(), rtol=rtol, atol=atol),
 )
 
 _minim_only = (
-    BFGSClassicalTrustRegionHessian(termination),
-    BFGSLinearTrustRegionHessian(termination),
-    BFGSLinearTrustRegion(termination),
+    BFGSClassicalTrustRegionHessian(convergence),
+    BFGSLinearTrustRegionHessian(convergence),
+    BFGSLinearTrustRegion(convergence),
     optx.DFP(rtol, atol, use_inverse=False),
     optx.DFP(rtol, atol, use_inverse=True),
-    DFPDampedNewton(termination),
-    DFPIndirectDampedNewton(termination),
+    DFPDampedNewton(convergence),
+    DFPIndirectDampedNewton(convergence),
     # Tighter tolerance needed to have DFPDogleg pass the JVP test.
-    DFPDogleg(CauchyTermination(1e-10, 1e-10)),
-    DFPClassicalTrustRegionHessian(termination),
+    DFPDogleg(optx.CauchyConvergence(1e-10, 1e-10)),
+    DFPClassicalTrustRegionHessian(convergence),
     optx.GradientDescent(1.5e-2, rtol, atol),
     # Tighter tolerance needed to have NonlinearCG pass the JVP test.
     optx.NonlinearCG(1e-10, 1e-10),

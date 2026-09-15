@@ -6,6 +6,7 @@ import jax.numpy as jnp
 from equinox.internal import ω
 from jaxtyping import Array, PyTree, Scalar
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Y
 from .._misc import (
     max_norm,
@@ -16,7 +17,6 @@ from .._misc import (
 )
 from .._search import AbstractDescent, AbstractSearch, FunctionInfo
 from .._solution import RESULTS
-from .._termination import CauchyTermination
 from .backtracking import BacktrackingArmijo
 from .gradient_methods import AbstractGradientDescent
 
@@ -184,7 +184,7 @@ class NonlinearCG(AbstractGradientDescent[Y, Aux]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: CauchyTermination[Y]
+    convergence: CauchyConvergence[Y]
     descent: NonlinearCGDescent[Y]
     search: AbstractSearch[Y, FunctionInfo.EvalGrad, FunctionInfo.Eval, Any]
 
@@ -214,6 +214,6 @@ class NonlinearCG(AbstractGradientDescent[Y, Aux]):
             function `(Y, Y, Y) -> Scalar` will work.
         - `search`: The (line) search to use at each step.
         """
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.descent = NonlinearCGDescent(method=method)
         self.search = search

@@ -11,6 +11,7 @@ from equinox import AbstractVar
 from equinox.internal import ω
 from jaxtyping import Array, Bool, Int, PyTree, Scalar
 
+from .._convergence import AbstractConvergence, CauchyConvergence
 from .._custom_types import Aux, DescentState, Fn, HessianUpdateState, SearchState, Y
 from .._minimise import AbstractMinimiser
 from .._misc import (
@@ -28,7 +29,6 @@ from .._search import (
     FunctionInfo,
 )
 from .._solution import RESULTS
-from .._termination import AbstractTermination, CauchyTermination
 from .backtracking import BacktrackingArmijo
 from .gauss_newton import NewtonDescent
 
@@ -134,7 +134,7 @@ class AbstractQuasiNewton(
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: AbstractVar[AbstractTermination[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y]]
     use_inverse: AbstractVar[bool]
     descent: AbstractVar[AbstractDescent[Y, _Hessian, Any]]
     search: AbstractVar[AbstractSearch[Y, _Hessian, FunctionInfo.Eval, Any]]
@@ -239,7 +239,7 @@ class AbstractQuasiNewton(
             )
             y_diff = (state.y_eval**ω - y**ω).ω
             f_diff = (f_eval**ω - state.f_info.f**ω).ω
-            terminate = self.termination(state.y_eval, y_diff, f_eval, f_diff)
+            terminate = self.convergence.check(state.y_eval, y_diff, f_eval, f_diff)
             terminate = jnp.where(
                 state.first_step, jnp.array(False), terminate
             )  # Skip termination on first step
@@ -437,7 +437,7 @@ class BFGS(AbstractBFGS[Y, Aux, _Hessian]):
     use_inverse: bool
     descent: NewtonDescent
     search: BacktrackingArmijo
-    termination: CauchyTermination
+    convergence: CauchyConvergence
     verbose: Callable[..., None]
 
     def __init__(
@@ -452,7 +452,7 @@ class BFGS(AbstractBFGS[Y, Aux, _Hessian]):
         self.descent = NewtonDescent(linear_solver=lx.Cholesky())
         # TODO(raderj): switch out `BacktrackingArmijo` with a better line search.
         self.search = BacktrackingArmijo()
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.verbose = default_verbose(verbose)
 
 
@@ -597,7 +597,7 @@ class DFP(AbstractDFP[Y, Aux, _Hessian]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: CauchyTermination
+    convergence: CauchyConvergence
     use_inverse: bool
     descent: NewtonDescent
     search: BacktrackingArmijo
@@ -615,7 +615,7 @@ class DFP(AbstractDFP[Y, Aux, _Hessian]):
         self.descent = NewtonDescent(linear_solver=lx.Cholesky())
         # TODO(raderj): switch out `BacktrackingArmijo` with a better line search.
         self.search = BacktrackingArmijo()
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.verbose = default_verbose(verbose)
 
 

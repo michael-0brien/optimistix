@@ -120,6 +120,10 @@ class BestSoFarMinimiser(  # pyright: ignore
     def _to_loss(self, y: Y, f: Scalar) -> Scalar:
         return f
 
+    @property
+    def convergence(self):
+        return self.solver.convergence
+
 
 BestSoFarMinimiser.__init__.__doc__ = """**Arguments:**
 
@@ -146,6 +150,10 @@ class BestSoFarLeastSquares(  # pyright: ignore
     def _to_loss(self, y: Y, f: Out) -> Scalar:
         return sum_squares(f)
 
+    @property
+    def convergence(self):
+        return self.solver.convergence
+
 
 BestSoFarLeastSquares.__init__.__doc__ = """**Arguments:**
 
@@ -170,6 +178,18 @@ class BestSoFarRootFinder(  # pyright: ignore
     def _to_loss(self, y: Y, f: Out) -> Scalar:
         return sum_squares(f)
 
+    @property
+    def rtol(self):
+        return self.solver.rtol
+
+    @property
+    def atol(self):
+        return self.solver.atol
+
+    @property
+    def norm(self):  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.solver.norm
+
 
 BestSoFarRootFinder.__init__.__doc__ = """**Arguments:**
 
@@ -193,6 +213,18 @@ class BestSoFarFixedPoint(  # pyright: ignore
 
     def _to_loss(self, y: Y, f: Y) -> Scalar:
         return sum_squares((y**ω - f**ω).ω)
+
+    @property
+    def rtol(self):
+        return self.solver.rtol
+
+    @property
+    def atol(self):
+        return self.solver.atol
+
+    @property
+    def norm(self):  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.solver.norm
 
 
 BestSoFarFixedPoint.__init__.__doc__ = """**Arguments:**

@@ -10,6 +10,7 @@ from equinox import AbstractVar
 from equinox.internal import ω
 from jaxtyping import Array, Float, PyTree, Scalar
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Y
 from .._misc import (
     default_verbose,
@@ -20,7 +21,6 @@ from .._misc import (
 from .._search import (
     FunctionInfo,
 )
-from .._termination import CauchyTermination
 from .backtracking import BacktrackingArmijo
 from .gauss_newton import NewtonDescent
 from .quasi_newton import AbstractQuasiNewton
@@ -564,7 +564,7 @@ class LBFGS(AbstractLBFGS[Y, Aux, _Hessian, _LBFGSUpdateState]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: CauchyTermination
+    convergence: CauchyConvergence
     use_inverse: bool
     descent: NewtonDescent
     search: BacktrackingArmijo
@@ -581,7 +581,7 @@ class LBFGS(AbstractLBFGS[Y, Aux, _Hessian, _LBFGSUpdateState]):
         history_length: int = 10,
         verbose: bool | Callable[..., None] = False,
     ):
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.use_inverse = use_inverse
         self.descent = NewtonDescent()
         self.search = BacktrackingArmijo()
