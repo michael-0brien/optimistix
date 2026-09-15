@@ -136,7 +136,7 @@ class BFGSDampedNewton(optx.AbstractBFGS):
 class BFGSScaledDampedNewton(optx.AbstractBFGS):
     """BFGS Hessian + direct Levenberg Marquardt update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.ScaledDampedNewtonDescent()
@@ -206,7 +206,7 @@ class DFPDampedNewton(optx.AbstractDFP):
 class DFPScaledDampedNewton(optx.AbstractDFP):
     """DFP Hessian + direct Levenberg Marquardt update."""
 
-    termination: optx.AbstractTermination
+    convergence: optx.AbstractConvergence
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.ScaledDampedNewtonDescent()

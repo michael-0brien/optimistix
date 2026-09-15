@@ -528,9 +528,7 @@ class ScaledLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         a `jax.custom_vjp`, and so does not support forward-mode autodifferentiation.
     """
 
-    rtol: float
-    atol: float
-    norm: Callable[[PyTree], Scalar]
+    convergence: CauchyConvergence[Y]
     descent: ScaledDampedNewtonDescent[Y]
     search: ClassicalTrustRegion[Y]
     verbose: Callable[..., None]
@@ -547,9 +545,7 @@ class ScaledLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         linear_solver: lx.AbstractLinearSolver = lx.QR(),
         verbose: bool | Callable[..., None] = False,
     ):
-        self.rtol = rtol
-        self.atol = atol
-        self.norm = norm
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.descent = ScaledDampedNewtonDescent(
             update_scaling_fn=update_scaling_fn, linear_solver=linear_solver
         )
@@ -561,7 +557,7 @@ ScaledLevenbergMarquardt.__init__.__doc__ = """**Arguments:**
 
 - `rtol`: Relative tolerance for terminating the solve.
 - `atol`: Absolute tolerance for terminating the solve.
-- `norm`: The norm used to determine the difference between two iterates in the 
+- `norm`: The norm used to determine the difference between two iterates in the
     convergence criteria. Should be any function `PyTree -> Scalar`. Optimistix
     includes three built-in norms: [`optimistix.max_norm`][],
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].
