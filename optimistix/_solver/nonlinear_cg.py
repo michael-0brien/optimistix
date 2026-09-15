@@ -6,6 +6,7 @@ import jax.numpy as jnp
 from equinox.internal import ω
 from jaxtyping import Array, PyTree, Scalar
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Y
 from .._misc import (
     max_norm,
@@ -16,7 +17,6 @@ from .._misc import (
 )
 from .._search import AbstractDescent, AbstractSearch, FunctionInfo
 from .._solution import RESULTS
-from .._termination import CauchyTermination
 from .backtracking import BacktrackingArmijo
 from .gradient_methods import AbstractGradientDescent
 
@@ -163,7 +163,7 @@ NonlinearCGDescent.__init__.__doc__ = """**Arguments:**
 
 - `method`: A callable `method(vector, vector_prev, diff_prev)` describing how to
     calculate the beta parameter of nonlinear CG. Nonlinear CG uses the previous search
-    direction, scaled by beta, and subtracts the gradient to find the next search 
+    direction, scaled by beta, and subtracts the gradient to find the next search
     direction. This parameter, in the nonlinear case, is the same as the parameter β_n
     described e.g. [on Wikipedia](https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method)
     for the linear case.
@@ -184,7 +184,7 @@ class NonlinearCG(AbstractGradientDescent[Y, Aux]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: CauchyTermination[Y]
+    convergence: CauchyConvergence[Y]
     descent: NonlinearCGDescent[Y]
     search: AbstractSearch[Y, FunctionInfo.EvalGrad, FunctionInfo.Eval, Any]
 
@@ -214,6 +214,6 @@ class NonlinearCG(AbstractGradientDescent[Y, Aux]):
             function `(Y, Y, Y) -> Scalar` will work.
         - `search`: The (line) search to use at each step.
         """
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.descent = NonlinearCGDescent(method=method)
         self.search = search

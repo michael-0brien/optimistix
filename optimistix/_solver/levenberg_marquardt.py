@@ -11,12 +11,12 @@ import lineax as lx
 from equinox.internal import ω
 from jaxtyping import Array, Float, PyTree, Scalar, ScalarLike
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Out, Y
 from .._misc import default_verbose, max_norm, tree_full_like, two_norm
 from .._root_find import AbstractRootFinder, root_find
 from .._search import AbstractDescent, FunctionInfo
 from .._solution import RESULTS
-from .._termination import CauchyTermination
 from .gauss_newton import AbstractGaussNewton, newton_step
 from .newton_chord import Newton
 from .trust_region import ClassicalTrustRegion
@@ -269,7 +269,7 @@ class IndirectDampedNewtonDescent(
         return (-(neg_y_diff**ω)).ω, new_result
 
 
-IndirectDampedNewtonDescent.__init__.__doc__ = """**Arguments:**    
+IndirectDampedNewtonDescent.__init__.__doc__ = """**Arguments:**
 
 - `lambda_0`: The initial value of the Levenberg--Marquardt parameter used in the root-
     find to hit the trust-region radius. If `IndirectDampedNewtonDescent` is failing,
@@ -406,7 +406,7 @@ class LevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         a `jax.custom_vjp`, and so does not support forward-mode autodifferentiation.
     """
 
-    termination: CauchyTermination[Y]
+    convergence: CauchyConvergence[Y]
     descent: DampedNewtonDescent[Y]
     search: ClassicalTrustRegion[Y]
     verbose: Callable[..., None]
@@ -419,7 +419,7 @@ class LevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         linear_solver: lx.AbstractLinearSolver = lx.QR(),
         verbose: bool | Callable[..., None] = False,
     ):
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.descent = DampedNewtonDescent(linear_solver=linear_solver)
         self.search = ClassicalTrustRegion()
         self.verbose = default_verbose(verbose)
@@ -429,7 +429,7 @@ LevenbergMarquardt.__init__.__doc__ = """**Arguments:**
 
 - `rtol`: Relative tolerance for terminating the solve.
 - `atol`: Absolute tolerance for terminating the solve.
-- `norm`: The norm used to determine the difference between two iterates in the 
+- `norm`: The norm used to determine the difference between two iterates in the
     convergence criteria. Should be any function `PyTree -> Scalar`. Optimistix
     includes three built-in norms: [`optimistix.max_norm`][],
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].
@@ -464,7 +464,7 @@ class IndirectLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
 
     descent: IndirectDampedNewtonDescent[Y]
     search: ClassicalTrustRegion[Y]
-    termination: CauchyTermination
+    convergence: CauchyConvergence
     verbose: Callable[..., None]
 
     def __init__(
@@ -477,7 +477,7 @@ class IndirectLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
         root_finder: AbstractRootFinder = Newton(rtol=0.01, atol=0.01),
         verbose: bool | Callable[..., None] = False,
     ):
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.descent = IndirectDampedNewtonDescent(
             lambda_0=lambda_0,
             linear_solver=linear_solver,
@@ -488,10 +488,10 @@ class IndirectLevenbergMarquardt(AbstractGaussNewton[Y, Out, Aux]):
 
 
 IndirectLevenbergMarquardt.__init__.__doc__ = """**Arguments:**
-    
+
 - `rtol`: Relative tolerance for terminating the solve.
 - `atol`: Absolute tolerance for terminating the solve.
-- `norm`: The norm used to determine the difference between two iterates in the 
+- `norm`: The norm used to determine the difference between two iterates in the
     convergence criteria. Should be any function `PyTree -> Scalar`. Optimistix
     includes three built-in norms: [`optimistix.max_norm`][],
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].

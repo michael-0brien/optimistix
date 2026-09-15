@@ -8,6 +8,7 @@ from equinox import AbstractVar
 from equinox.internal import ω
 from jaxtyping import Array, Bool, PyTree, Scalar
 
+from .._convergence import AbstractConvergence, CauchyConvergence
 from .._custom_types import Aux, DescentState, Fn, Out, SearchState, Y
 from .._minimise import AbstractMinimiser
 from .._misc import (
@@ -23,7 +24,6 @@ from .._search import (
     FunctionInfo,
 )
 from .._solution import RESULTS
-from .._termination import AbstractTermination, CauchyTermination
 from .learning_rate import LearningRate
 
 
@@ -113,9 +113,7 @@ class AbstractGradientDescent(AbstractMinimiser[Y, Aux, _GradientDescentState]):
 
     Subclasses must provide the following abstract attributes, with the following types:
 
-    - `rtol: float`
-    - `atol: float`
-    - `norm: Callable[[PyTree], Scalar]`
+    - `convergence: AbstractConvergence`
     - `descent: AbstractDescent`
     - `search: AbstractSearch`
 
@@ -127,7 +125,7 @@ class AbstractGradientDescent(AbstractMinimiser[Y, Aux, _GradientDescentState]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: AbstractVar[AbstractTermination[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y]]
     descent: AbstractVar[AbstractDescent[Y, FunctionInfo.EvalGrad, Any]]
     search: AbstractVar[
         AbstractSearch[Y, FunctionInfo.EvalGrad, FunctionInfo.Eval, Any]
@@ -185,7 +183,7 @@ class AbstractGradientDescent(AbstractMinimiser[Y, Aux, _GradientDescentState]):
             descent_state = self.descent.query(state.y_eval, f_eval_info, descent_state)
             y_diff = (state.y_eval**ω - y**ω).ω
             f_diff = (f_eval**ω - state.f_info.f**ω).ω
-            terminate = self.termination(state.y_eval, y_diff, f_eval, f_diff)
+            terminate = self.convergence.check(state.y_eval, y_diff, f_eval, f_diff)
             terminate = jnp.where(
                 state.first_step, jnp.array(False), terminate
             )  # Skip termination on first step
@@ -255,7 +253,7 @@ class GradientDescent(AbstractGradientDescent[Y, Aux]):
 
     descent: SteepestDescent[Y]
     search: LearningRate[Y]
-    termination: CauchyTermination[Y]
+    convergence: CauchyConvergence[Y]
 
     def __init__(
         self,
@@ -276,4 +274,4 @@ class GradientDescent(AbstractGradientDescent[Y, Aux]):
         """
         self.descent = SteepestDescent()
         self.search = LearningRate(learning_rate)
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)

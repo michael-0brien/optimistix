@@ -10,6 +10,7 @@ from equinox import AbstractVar
 from equinox.internal import ω
 from jaxtyping import Array, Float, PyTree, Scalar
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Y
 from .._misc import (
     default_verbose,
@@ -20,7 +21,6 @@ from .._misc import (
 from .._search import (
     FunctionInfo,
 )
-from .._termination import CauchyTermination
 from .backtracking import BacktrackingArmijo
 from .gauss_newton import NewtonDescent
 from .quasi_newton import AbstractQuasiNewton
@@ -564,7 +564,7 @@ class LBFGS(AbstractLBFGS[Y, Aux, _Hessian, _LBFGSUpdateState]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    termination: CauchyTermination
+    convergence: CauchyConvergence
     use_inverse: bool
     descent: NewtonDescent
     search: BacktrackingArmijo
@@ -581,7 +581,7 @@ class LBFGS(AbstractLBFGS[Y, Aux, _Hessian, _LBFGSUpdateState]):
         history_length: int = 10,
         verbose: bool | Callable[..., None] = False,
     ):
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.use_inverse = use_inverse
         self.descent = NewtonDescent()
         self.search = BacktrackingArmijo()
@@ -599,12 +599,12 @@ LBFGS.__init__.__doc__ = """**Arguments:**
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].
 - `use_inverse`: Whether to use the inverse Hessian approximation (default) or the
     Hessian approximation. If `True`, the L-BFGS update will use the inverse Hessian
-    approximation, and the step is computed as a single matrix-vector product, without 
-    materialising the matrix. If `False`, then the limited-memory approximation to the 
+    approximation, and the step is computed as a single matrix-vector product, without
+    materialising the matrix. If `False`, then the limited-memory approximation to the
     Hessian is computed instead, and the step is computed by solving a linear system.
-- `history_length`: Number of parameter and gradient residuals to retain in the 
-    L-BFGS history. Larger values can improve accuracy of the inverse Hessian 
-    approximation, while smaller values reduce memory and computation. 
+- `history_length`: Number of parameter and gradient residuals to retain in the
+    L-BFGS history. Larger values can improve accuracy of the inverse Hessian
+    approximation, while smaller values reduce memory and computation.
     The default is 10.
 - `verbose`: Whether to print out extra information about how the solve is proceeding.
     Can either be `False` to print out nothing, or `True` to print out all information,

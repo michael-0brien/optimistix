@@ -9,6 +9,7 @@ from equinox import AbstractVar
 from equinox.internal import ω
 from jaxtyping import Array, Bool, Int, PyTree, Scalar
 
+from .._convergence import AbstractConvergence, CauchyConvergence
 from .._custom_types import Args, Aux, DescentState, Fn, Out, SearchState, Y
 from .._least_squares import AbstractLeastSquaresSolver
 from .._misc import (
@@ -25,7 +26,6 @@ from .._search import (
     FunctionInfo,
 )
 from .._solution import RESULTS
-from .._termination import AbstractTermination, CauchyTermination
 from .learning_rate import LearningRate
 
 
@@ -193,9 +193,7 @@ class AbstractGaussNewton(AbstractLeastSquaresSolver[Y, Out, Aux, _GaussNewtonSt
 
     Subclasses must provide the following attributes, with the following types:
 
-    - `rtol`: `float`
-    - `atol`: `float`
-    - `norm`: `Callable[[PyTree], Scalar]`
+    - `convergence`: `AbstractConvergence`
     - `descent`: `AbstractDescent`
     - `search`: `AbstractSearch`
     - `verbose`: `Callable[..., None]`
@@ -208,7 +206,7 @@ class AbstractGaussNewton(AbstractLeastSquaresSolver[Y, Out, Aux, _GaussNewtonSt
         a `jax.custom_vjp`, and so does not support forward-mode autodifferentiation.
     """
 
-    termination: AbstractVar[AbstractTermination[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y]]
     descent: AbstractVar[AbstractDescent[Y, FunctionInfo.ResidualJac, Any]]
     search: AbstractVar[
         AbstractSearch[Y, FunctionInfo.ResidualJac, FunctionInfo.ResidualJac, Any]
@@ -279,7 +277,7 @@ class AbstractGaussNewton(AbstractLeastSquaresSolver[Y, Out, Aux, _GaussNewtonSt
             descent_state = self.descent.query(state.y_eval, f_eval_info, descent_state)
             y_diff = (state.y_eval**ω - y**ω).ω
             f_diff = (f_eval_info.residual**ω - state.f_info.residual**ω).ω
-            terminate = self.termination(
+            terminate = self.convergence.check(
                 state.y_eval,
                 y_diff,
                 f_eval_info.residual,
@@ -373,7 +371,7 @@ class GaussNewton(AbstractGaussNewton[Y, Out, Aux]):
 
     descent: NewtonDescent[Y]
     search: LearningRate[Y]
-    termination: CauchyTermination[Y]
+    convergence: CauchyConvergence[Y]
     verbose: Callable[..., None]
 
     def __init__(
@@ -386,7 +384,7 @@ class GaussNewton(AbstractGaussNewton[Y, Out, Aux]):
     ):
         self.descent = NewtonDescent(linear_solver=linear_solver)
         self.search = LearningRate(1.0)
-        self.termination = CauchyTermination(rtol=rtol, atol=atol, norm=norm)
+        self.convergence = CauchyConvergence(rtol=rtol, atol=atol, norm=norm)
         self.verbose = default_verbose(verbose)
 
 
@@ -394,7 +392,7 @@ GaussNewton.__init__.__doc__ = """**Arguments:**
 
 - `rtol`: Relative tolerance for terminating the solve.
 - `atol`: Absolute tolerance for terminating the solve.
-- `norm`: The norm used to determine the difference between two iterates in the 
+- `norm`: The norm used to determine the difference between two iterates in the
     convergence criteria. Should be any function `PyTree -> Scalar`. Optimistix
     includes three built-in norms: [`optimistix.max_norm`][],
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].

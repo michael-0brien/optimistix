@@ -16,11 +16,11 @@ else:
 from equinox.internal import ω
 from jaxtyping import Array, Bool, PyTree, Scalar
 
+from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Fn, Out, Y
 from .._misc import max_norm, tree_dtype, tree_full_like
 from .._root_find import AbstractRootFinder
 from .._solution import RESULTS
-from .._termination import CauchyTermination
 
 
 def _small(diffsize: Scalar) -> Bool[Array, " "]:
@@ -167,8 +167,8 @@ class _AbstractNewtonChord(AbstractRootFinder[Y, Out, Aux, _NewtonChordState[Y]]
             # we're doing a root-find and know that we're aiming to get close to zero.
             # Note that this does mean that the `rtol` is ignored in f-space, and only
             # `atol` matters.
-            termination = CauchyTermination(self.rtol, self.atol, self.norm)
-            terminate = termination(
+            convergence = CauchyConvergence(self.rtol, self.atol, self.norm)
+            terminate = convergence.check(
                 y,
                 state.diff,
                 jtu.tree_map(jnp.zeros_like, state.f),
@@ -185,7 +185,7 @@ class _AbstractNewtonChord(AbstractRootFinder[Y, Out, Aux, _NewtonChordState[Y]]
             converged = _converged(factor, self.kappa)
             terminate = at_least_two & (small | diverged | converged)
             terminate_result = RESULTS.where(
-                at_least_two & jnp.invert(small) & (diverged | jnp.invert(converged)),
+                at_least_two & jnp.invert(small) & diverged,
                 RESULTS.nonlinear_divergence,
                 RESULTS.successful,
             )
@@ -254,7 +254,7 @@ _init_doc = """**Arguments:**
 
 - `rtol`: Relative tolerance for terminating the solve.
 - `atol`: Absolute tolerance for terminating the solve.
-- `norm`: The norm used to determine the difference between two iterates in the 
+- `norm`: The norm used to determine the difference between two iterates in the
     convergence criteria. Should be any function `PyTree -> Scalar`. Optimistix
     includes three built-in norms: [`optimistix.max_norm`][],
     [`optimistix.rms_norm`][], and [`optimistix.two_norm`][].
