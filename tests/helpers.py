@@ -110,6 +110,19 @@ class DoglegMax(optx.AbstractGaussNewton[Y, Out, Aux]):
         self.verbose = default_verbose(False)
 
 
+class LineSearchLM(optx.AbstractGaussNewton[Y, Out, Aux]):
+    """Scale-invariant levenberg marquardt with a `BacktrackingArmijo`
+    line search"""
+
+    rtol: float
+    atol: float
+    norm: Callable = optx.max_norm
+    use_inverse: bool = False
+    search: optx.AbstractSearch = optx.BacktrackingArmijo()
+    descent: optx.AbstractDescent = optx.ScaledDampedNewtonDescent()
+    verbose: Callable[..., None] = default_verbose(False)
+
+
 class BFGSDampedNewton(optx.AbstractBFGS):
     """BFGS Hessian + direct Levenberg Marquardt update."""
 
@@ -117,6 +130,16 @@ class BFGSDampedNewton(optx.AbstractBFGS):
     use_inverse: bool = False
     search: optx.AbstractSearch = optx.ClassicalTrustRegion()
     descent: optx.AbstractDescent = optx.DampedNewtonDescent()
+    verbose: Callable[..., None] = default_verbose(False)
+
+
+class BFGSScaledDampedNewton(optx.AbstractBFGS):
+    """BFGS Hessian + direct Levenberg Marquardt update."""
+
+    termination: optx.AbstractTermination
+    use_inverse: bool = False
+    search: optx.AbstractSearch = optx.ClassicalTrustRegion()
+    descent: optx.AbstractDescent = optx.ScaledDampedNewtonDescent()
     verbose: Callable[..., None] = default_verbose(False)
 
 
@@ -180,6 +203,16 @@ class DFPDampedNewton(optx.AbstractDFP):
     verbose: Callable[..., None] = default_verbose(False)
 
 
+class DFPScaledDampedNewton(optx.AbstractDFP):
+    """DFP Hessian + direct Levenberg Marquardt update."""
+
+    termination: optx.AbstractTermination
+    use_inverse: bool = False
+    search: optx.AbstractSearch = optx.ClassicalTrustRegion()
+    descent: optx.AbstractDescent = optx.ScaledDampedNewtonDescent()
+    verbose: Callable[..., None] = default_verbose(False)
+
+
 class DFPIndirectDampedNewton(optx.AbstractDFP):
     """DFP Hessian + indirect Levenberg Marquardt update."""
 
@@ -215,6 +248,7 @@ convergence = optx.CauchyConvergence(rtol, atol, optx.max_norm)
 _lsqr_only = (
     optx.LevenbergMarquardt(rtol, atol),
     optx.IndirectLevenbergMarquardt(rtol, atol),
+    optx.ScaledLevenbergMarquardt(rtol, atol),
     optx.GaussNewton(rtol, atol, linear_solver=lx.AutoLinearSolver(well_posed=False)),
     optx.Dogleg(rtol, atol, linear_solver=lx.AutoLinearSolver(well_posed=False)),
     DoglegMax(rtol, atol),
