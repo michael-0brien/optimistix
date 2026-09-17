@@ -13,6 +13,7 @@ from ._iterate import AbstractIterativeSolver, iterative_solve
 from ._least_squares import AbstractLeastSquaresSolver
 from ._minimise import AbstractMinimiser, minimise
 from ._misc import inexact_asarray, NoneAux, OutAsArray, tree_full_like
+from ._search import FunctionInfo
 from ._solution import Solution
 
 
@@ -67,7 +68,7 @@ class _ToRoot(AbstractIterativeSolver):
         # Checks that `f` is within tolerance of zero: a step from the current
         # iterate to a root, with no change in `y`, counts as converged.
         near_zero = self.solver.convergence.check(
-            y, tree_full_like(y, 0), tree_full_like(f, 0), f
+            y, FunctionInfo.Residual(tree_full_like(f, 0)), tree_full_like(y, 0), f
         )
         return terminate & near_zero, result
 

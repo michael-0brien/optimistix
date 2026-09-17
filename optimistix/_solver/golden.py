@@ -11,6 +11,7 @@ from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Fn
 from .._minimise import AbstractMinimiser
 from .._misc import tree_where
+from .._search import FunctionInfo
 from .._solution import RESULTS
 
 
@@ -117,10 +118,7 @@ class GoldenSearch(AbstractMinimiser[Float[Array, ""], Aux, _GoldenSearchState])
         y_diff = state.middle - y_
         f_diff = state.f_middle - f
         terminate = self.convergence.check(
-            state.middle,
-            y_diff,
-            state.f_middle,
-            f_diff,
+            state.middle, FunctionInfo.Eval(state.f_middle), y_diff, f_diff
         )
 
         # y is either a new candidate minimum point (if the function value at `y_` is

@@ -18,7 +18,7 @@ from ._solution import Solution
 class AbstractMinimiser(AbstractIterativeSolver[Y, Scalar, Aux, SolverState]):
     """Abstract base class for all minimisers."""
 
-    convergence: AbstractVar[AbstractConvergence[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y, Any]]
 
 
 def _rewrite_fn(minimum, _, inputs):

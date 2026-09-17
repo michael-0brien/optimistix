@@ -11,6 +11,7 @@ from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Fn, Y
 from .._minimise import AbstractMinimiser
 from .._misc import default_verbose, max_norm
+from .._search import FunctionInfo
 from .._solution import RESULTS
 
 
@@ -102,7 +103,9 @@ class OptaxMinimiser(AbstractMinimiser[Y, Aux, _OptaxState]):
             grads, state.opt_state, y, value=f, grad=grads, value_fn=_fn_for_optax
         )
         new_y = eqx.apply_updates(y, updates)
-        terminate = self.convergence.check(y, updates, f, f - state.f)
+        terminate = self.convergence.check(
+            y, FunctionInfo.EvalGrad(f, grads), updates, f - state.f
+        )
         new_state = _OptaxState(
             step=state.step + 1, f=f, opt_state=new_opt_state, terminate=terminate
         )

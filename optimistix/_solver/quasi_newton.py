@@ -134,7 +134,7 @@ class AbstractQuasiNewton(
         function does not support reverse-mode automatic differentiation.
     """
 
-    convergence: AbstractVar[AbstractConvergence[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y, _Hessian]]
     use_inverse: AbstractVar[bool]
     descent: AbstractVar[AbstractDescent[Y, _Hessian, Any]]
     search: AbstractVar[AbstractSearch[Y, _Hessian, FunctionInfo.Eval, Any]]
@@ -239,7 +239,9 @@ class AbstractQuasiNewton(
             )
             y_diff = (state.y_eval**ω - y**ω).ω
             f_diff = (f_eval**ω - state.f_info.f**ω).ω
-            terminate = self.convergence.check(state.y_eval, y_diff, f_eval, f_diff)
+            terminate = self.convergence.check(
+                state.y_eval, f_eval_info, y_diff, f_diff
+            )
             terminate = jnp.where(
                 state.first_step, jnp.array(False), terminate
             )  # Skip termination on first step

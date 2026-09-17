@@ -1,7 +1,9 @@
 from collections.abc import Callable
 
+import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
+import lineax as lx
 import optimistix as optx
 import pytest
 from jaxtyping import PyTree, Scalar
@@ -17,12 +19,12 @@ from .helpers import (
 def test_cauchy_convergence_check():
     convergence = optx.CauchyConvergence(rtol=1e-3, atol=1e-6)
     y = jnp.array([1.0, 2.0])
-    f = jnp.array(3.0)
+    f_info = optx.FunctionInfo.Eval(jnp.array(3.0))
     small = jnp.array([1e-7, 1e-7])
     large = jnp.array([1e-1, 1e-1])
-    assert convergence.check(y, small, f, jnp.array(1e-7))
-    assert not convergence.check(y, large, f, jnp.array(1e-7))
-    assert not convergence.check(y, small, f, jnp.array(1.0))
+    assert convergence.check(y, f_info, small, jnp.array(1e-7))
+    assert not convergence.check(y, f_info, large, jnp.array(1e-7))
+    assert not convergence.check(y, f_info, small, jnp.array(1.0))
     assert convergence.norm is optx.max_norm
 
 
@@ -33,12 +35,42 @@ def test_cauchy_convergence_positional_arguments():
     assert convergence.norm is optx.two_norm
 
 
+class _CustomFunctionInfo(optx.FunctionInfo):
+    value: Scalar
+
+    def as_min(self):
+        return self.value
+
+
+_y = jnp.array(1.0)
+_f = jnp.array(6.0)
+_operator = lx.IdentityLinearOperator(jax.eval_shape(lambda: _y))
+_f_infos = (
+    optx.FunctionInfo.Eval(_f),
+    optx.FunctionInfo.EvalGrad(_f, _y),
+    optx.FunctionInfo.EvalGradHessian(_f, _y, _operator),
+    optx.FunctionInfo.EvalGradHessianInv(_f, _y, _operator),
+    optx.FunctionInfo.Residual(_f),
+    optx.FunctionInfo.ResidualJac(_f, _operator),
+    _CustomFunctionInfo(_f),
+)
+
+
+# Each of these records `f = 6`, so `f_diff` is compared against `1e-6 + 1e-3 * 6`.
+@pytest.mark.parametrize("f_info", _f_infos)
+def test_cauchy_convergence_function_info(f_info):
+    convergence = optx.CauchyConvergence(rtol=1e-3, atol=1e-6)
+    y_diff = jnp.array(1e-7)
+    assert convergence.check(_y, f_info, y_diff, jnp.array(1e-3))
+    assert not convergence.check(_y, f_info, y_diff, jnp.array(1e-2))
+
+
 class _AbsoluteConvergence(optx.AbstractConvergence):
     ytol: float
     ftol: float
     norm: Callable[[PyTree], Scalar] = optx.max_norm
 
-    def check(self, y, y_diff, f, f_diff):
+    def check(self, y, f_info, y_diff, f_diff):
         y_converged = self.norm(y_diff) < self.ytol
         f_converged = self.norm(f_diff) < self.ftol
         return y_converged & f_converged
@@ -47,7 +79,7 @@ class _AbsoluteConvergence(optx.AbstractConvergence):
 class _MaxNormConvergence(optx.AbstractConvergence):
     norm: Callable[[PyTree], Scalar]
 
-    def check(self, y, y_diff, f, f_diff):
+    def check(self, y, f_info, y_diff, f_diff):
         y_converged = optx.max_norm(y_diff) < 1e-8
         f_converged = optx.max_norm(f_diff) < 1e-8
         return y_converged & f_converged

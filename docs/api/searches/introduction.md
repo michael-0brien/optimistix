@@ -43,7 +43,7 @@ Thus, we refer to "accepted" steps as being those at which we re-evaluate the de
 
 **Convergence criteria**
 
-Convergence criteria consume the change in the iterate and the change in the function value between two accepted steps, and decide whether the solve has converged. The default is [`optimistix.CauchyConvergence`][], which checks that both changes are small relative to `rtol` and `atol`. Custom criteria can use different tolerances for `y` and `f`, or implement per-parameter tolerances.
+Convergence criteria decide whether the solve has converged. They consume the most recently accepted iterate, the [`optimistix.FunctionInfo`][] evaluated there, and how much the iterate and the function value changed over the last accepted step. The default is [`optimistix.CauchyConvergence`][], which checks that both changes are small relative to `rtol` and `atol`. Custom criteria can use different tolerances for `y` and `f`, apply per-parameter tolerances, or test the gradient.
 
 **API**
 

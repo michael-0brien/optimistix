@@ -125,7 +125,7 @@ class AbstractGradientDescent(AbstractMinimiser[Y, Aux, _GradientDescentState]):
         function does not support reverse-mode automatic differentiation.
     """
 
-    convergence: AbstractVar[AbstractConvergence[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y, FunctionInfo.EvalGrad]]
     descent: AbstractVar[AbstractDescent[Y, FunctionInfo.EvalGrad, Any]]
     search: AbstractVar[
         AbstractSearch[Y, FunctionInfo.EvalGrad, FunctionInfo.Eval, Any]
@@ -183,7 +183,9 @@ class AbstractGradientDescent(AbstractMinimiser[Y, Aux, _GradientDescentState]):
             descent_state = self.descent.query(state.y_eval, f_eval_info, descent_state)
             y_diff = (state.y_eval**ω - y**ω).ω
             f_diff = (f_eval**ω - state.f_info.f**ω).ω
-            terminate = self.convergence.check(state.y_eval, y_diff, f_eval, f_diff)
+            terminate = self.convergence.check(
+                state.y_eval, f_eval_info, y_diff, f_diff
+            )
             terminate = jnp.where(
                 state.first_step, jnp.array(False), terminate
             )  # Skip termination on first step

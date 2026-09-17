@@ -206,7 +206,7 @@ class AbstractGaussNewton(AbstractLeastSquaresSolver[Y, Out, Aux, _GaussNewtonSt
         a `jax.custom_vjp`, and so does not support forward-mode autodifferentiation.
     """
 
-    convergence: AbstractVar[AbstractConvergence[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y, FunctionInfo.ResidualJac]]
     descent: AbstractVar[AbstractDescent[Y, FunctionInfo.ResidualJac, Any]]
     search: AbstractVar[
         AbstractSearch[Y, FunctionInfo.ResidualJac, FunctionInfo.ResidualJac, Any]
@@ -278,10 +278,7 @@ class AbstractGaussNewton(AbstractLeastSquaresSolver[Y, Out, Aux, _GaussNewtonSt
             y_diff = (state.y_eval**ω - y**ω).ω
             f_diff = (f_eval_info.residual**ω - state.f_info.residual**ω).ω
             terminate = self.convergence.check(
-                state.y_eval,
-                y_diff,
-                f_eval_info.residual,
-                f_diff,
+                state.y_eval, f_eval_info, y_diff, f_diff
             )
             return state.y_eval, f_eval_info, aux_eval, descent_state, terminate
 

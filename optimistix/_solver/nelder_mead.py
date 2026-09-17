@@ -14,6 +14,7 @@ from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Fn, Y
 from .._minimise import AbstractMinimiser
 from .._misc import max_norm, tree_full_like, tree_where
+from .._search import FunctionInfo
 from .._solution import RESULTS
 
 
@@ -434,7 +435,9 @@ class NelderMead(AbstractMinimiser[Y, Aux, _NelderMeadState[Y, Aux]]):
         f_best, best, best_index = state.best
         y_diff = jtu.tree_map(lambda a, b: a - b[None], state.simplex, best)
         f_diff = (state.f_simplex**ω - f_best**ω).ω
-        converged = self.convergence.check(ω(best)[None].ω, y_diff, f_best, f_diff)
+        converged = self.convergence.check(
+            ω(best)[None].ω, FunctionInfo.Eval(f_best), y_diff, f_diff
+        )
         #
         # minpack does a further test here where it takes for each unit vector e_i a
         # perturbation "delta" and asserts that f(x + delta e_i) > f(x) and

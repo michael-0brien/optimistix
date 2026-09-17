@@ -20,6 +20,7 @@ from .._convergence import CauchyConvergence
 from .._custom_types import Aux, Fn, Out, Y
 from .._misc import max_norm, tree_dtype, tree_full_like
 from .._root_find import AbstractRootFinder
+from .._search import FunctionInfo
 from .._solution import RESULTS
 
 
@@ -170,8 +171,8 @@ class _AbstractNewtonChord(AbstractRootFinder[Y, Out, Aux, _NewtonChordState[Y]]
             convergence = CauchyConvergence(self.rtol, self.atol, self.norm)
             terminate = convergence.check(
                 y,
+                FunctionInfo.Residual(jtu.tree_map(jnp.zeros_like, state.f)),
                 state.diff,
-                jtu.tree_map(jnp.zeros_like, state.f),
                 state.f,
             )
             terminate_result = RESULTS.successful

@@ -18,7 +18,7 @@ from ._solution import Solution
 class AbstractLeastSquaresSolver(AbstractIterativeSolver[Y, Out, Aux, SolverState]):
     """Abstract base class for all least squares solvers."""
 
-    convergence: AbstractVar[AbstractConvergence[Y]]
+    convergence: AbstractVar[AbstractConvergence[Y, Any]]
 
 
 def _rewrite_fn(optimum, _, inputs):
